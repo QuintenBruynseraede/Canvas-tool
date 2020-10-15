@@ -1,0 +1,30 @@
+<html>
+    <script type="text/javascript" src="draw.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <body style="padding:5px" onload="init()">
+        <div id="canvas_div">
+            <canvas id="canvas" tabindex='1' width="400" height="400" ></canvas>
+        </div>
+        <div id="toolbox">
+            <p>Choose tool</p>
+            <p id="current_tool"></p>
+            <div class="tool">
+                <div class="tool_icon" style="background:green;" id="node" onclick="setTool(this.id)"></div>
+                <div class="tool_label"><p>Node</p></div>
+            </div>
+            <div class="tool">
+                <div class="tool_icon" style="background:rgb(167, 17, 17);" id="edge" onclick="setTool(this.id)"></div>
+                <div class="tool_label"><p>Edge</p></div>
+            </div>
+            <div class="tool">
+                <div class="tool_icon" style="background:blue" id="label" onclick="setTool(this.id)"></div>
+                <div class="tool_label"><p>Label</p></div>
+            </div>
+            <div class="tool">
+                <div class="tool_icon" style="background:cyan" id="move" onclick="setTool(this.id)"></div>
+                <div class="tool_label"><p>Move</p></div>
+            </div>
+        </div>
+    </body>
+</html>
