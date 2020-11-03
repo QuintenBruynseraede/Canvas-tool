@@ -72,6 +72,7 @@ function mouseUp(e) {
         case "edge":
             if (firstNode == null) {
                 firstNode = getClosestNode(mouseX,mouseY,10).id;
+                console.log(firstNode);
             }
             else {
                 secondNode = getClosestNode(mouseX,mouseY,10).id;
@@ -168,6 +169,10 @@ function keyDown(e) {
     if (key === "Backspace" && selectedElem != null) {
         console.log(selectedElem.label.slice(0,-1));
         selectedElem.label = selectedElem.label.slice(0,-1);
+        draw();
+    }
+    if ((key === "Escape" || key === "Enter") && selectedElem != null) {
+        selectedElem = null;
         draw();
     }
 }
@@ -283,7 +288,7 @@ function draw() {
     for (var i = 0; i < storedNodes.length; i++) {
         var node =  storedNodes[i];
         ctx.beginPath();
-        if (node == selectedElem) {
+        if (node == selectedElem || i == firstNode)  {
             ctx.strokeStyle = "red";
             ctx.arc(node.x,node.y,3,0,2*Math.PI);
         }
