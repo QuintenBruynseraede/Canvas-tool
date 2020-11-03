@@ -71,15 +71,13 @@ function mouseUp(e) {
             break;
         case "edge":
             if (firstNode == null) {
-                firstNode = getClosestNode(mouseX,mouseY,10).elem;
+                firstNode = getClosestNode(mouseX,mouseY,10).id;
             }
             else {
-                secondNode = getClosestNode(mouseX,mouseY,10).elem;
+                secondNode = getClosestNode(mouseX,mouseY,10).id;
                 addEdge({
-                    x1: firstNode.x,
-                    y1: firstNode.y,
-                    x2: secondNode.x,
-                    y2: secondNode.y,
+                    node1: firstNode,
+                    node2: secondNode,
                     label: "",
                     color: 0,
                     style: 0
@@ -104,14 +102,7 @@ function mouseUp(e) {
                 console.log("null");
             }
             else {
-                if (res1.dist > res2.dist) {
-                    selectedElem = res2.elem;
-                    console.log("edge");
-                }
-                else {
-                    selectedElem = res1.elem;
-                    console.log("node");
-                }
+                selectedElem = res1.elem;
             }
 
 
@@ -268,7 +259,6 @@ function draw() {
     ctx.lineWidth = oldWidth;
 
 
-
     // redraw all edges
     for (var i = 0; i < storedEdges.length; i++) {
         var edge = storedEdges[i];
@@ -279,11 +269,11 @@ function draw() {
             ctx.strokeStyle = "black";
         }
         ctx.beginPath();
-        ctx.moveTo(edge.x1, edge.y1);
-        ctx.lineTo(edge.x2, edge.y2);
+        ctx.moveTo(storedNodes[edge.node1].x, storedNodes[edge.node1].y);
+        ctx.lineTo(storedNodes[edge.node2].x, storedNodes[edge.node2].y);
         if (edge.label != "") {
-            ctx.fillText(edge.label,(edge.x1+edge.x2)/2,(edge.y1+edge.y2)/2-15);
-            console.log(edge.label);
+            ctx.fillText(edge.label,(storedNodes[edge.node1].x+storedNodes[edge.node2].x)/2,(storedNodes[edge.node1].y+storedNodes[edge.node2].y)/2-15);
+            // console.log(edge.label);
         }
         ctx.stroke();
         
@@ -342,17 +332,19 @@ function getClosestNode(x,y,maxdist) {
     // Find closest node
     var minDist = 9999;
     var minElem;
+    var id=null;
 
     for (var i = 0; i < storedNodes.length; i++) {
         if (Math.sqrt(Math.pow(x-storedNodes[i].x,2) + Math.pow(y-storedNodes[i].y,2)) < minDist) {
             minDist = Math.sqrt(Math.pow(x-storedNodes[i].x,2) + Math.pow(y-storedNodes[i].y,2));
             minElem = storedNodes[i];
+            id = i;
         }
     }
     if (minDist > maxdist) {
-        return {elem: null,dist:null}
+        return {elem: null,dist:null,id:null}
     }
-    return {elem: minElem,dist:minDist}
+    return {elem: minElem,dist:minDist,id:id}
 }
 
 function getClosestEdge(x,y,maxdist) {
@@ -362,10 +354,10 @@ function getClosestEdge(x,y,maxdist) {
     var x1,x2,y1,y2,x0,y0;
 
     for (var i = 0; i < storedEdges.length; i++) {
-        x1 = storedEdges[i].x1;
-        x2 = storedEdges[i].x2;
-        y1 = storedEdges[i].y1;
-        y2 = storedEdges[i].y2;
+        x1 = storedNodes[storedEdges[i].node1].x;
+        x2 = storedNodes[storedEdges[i].node2].x;
+        y1 = storedNodes[storedEdges[i].node1].y;
+        y2 = storedNodes[storedEdges[i].node2].y;
         x0 = x;
         y0 = y;
         
@@ -383,10 +375,13 @@ function getClosestEdge(x,y,maxdist) {
 
 function addEdge(e) {
     // find identical edge (ignoring label)
+    if (e.node1 == e.node2) {
+        return;
+    }
+
     for (var i = 0; i < storedEdges.length; i++) {
         e2 = storedEdges[i];
-        if (e.x1 == e2.x1 && e.x2 == e2.x2 && e.y1 == e2.y1 && e.y2 == e2.y2 ||
-            e.x2 == e2.x1 && e.x1 == e2.x2 && e.y2 == e2.y1 && e.y1 == e2.y2) {
+        if (e.node1 == e2.node1 && e.node2 == e2.node2) {
             console.log("Edge already exists!");
             return;
         }
@@ -396,19 +391,6 @@ function addEdge(e) {
 }
 
 function moveNode(node,toX,toY) {
-
-    for (var i = 0; i < storedEdges.length; i++) {
-        e = storedEdges[i];
-        if (e.x1 == node.x && e.y1 == node.y) {
-            e.x1 = toX;
-            e.y1 = toY;
-        }
-        else if (e.x2 == node.x && e.y2 == node.y) {
-            e.x2 = toX;
-            e.y2 = toY;
-        }
-    } 
-
     node.x = snapToGrid(toX,0)[0];
     node.y = snapToGrid(0,toY)[1];
 }
