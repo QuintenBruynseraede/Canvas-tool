@@ -12,6 +12,7 @@ var selectedElem;
 var firstNode = null;
 var secondNode = null;
 var movingElem = null;
+var grid = 0;
 
 function init() {
     canvas = document.getElementById("canvas");
@@ -60,9 +61,11 @@ function mouseUp(e) {
     switch (tool) {
         case "node":
             storedNodes.push({
-                x: mouseX,
-                y: mouseY,
+                x: snapToGrid(mouseX,mouseY)[0],
+                y: snapToGrid(mouseX,mouseY)[1],
                 label: "",
+                color: 0,
+                style: 0
             })
             console.log("Added node at "+mouseX+",",mouseY);
             break;
@@ -77,7 +80,9 @@ function mouseUp(e) {
                     y1: firstNode.y,
                     x2: secondNode.x,
                     y2: secondNode.y,
-                    label: ""
+                    label: "",
+                    color: 0,
+                    style: 0
                 });
                 firstNode = null;
                 secondNode = null;
@@ -180,6 +185,89 @@ function keyDown(e) {
 function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var oldWidth = ctx.lineWidth;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.1;
+
+
+    // redraw grid
+    if (grid == 0) {
+        // Free drawing: no grid
+    }
+    else if (grid == 1) {
+        // 10x10 grid
+        console.log("Drawing grid 1");
+
+        for (var i=0;i<500;i+=10) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, 500);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0,i);
+            ctx.lineTo(500,i);
+            ctx.stroke();
+        }
+    }
+    else if (grid == 2) {
+        // 15x15 grid
+        console.log("Drawing grid 2");
+        for (var i=0;i<500;i+=15) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, 500);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0,i);
+            ctx.lineTo(500,i);
+            ctx.stroke();
+        }
+    }
+
+    else if (grid == 3) {
+        // 25x25 grid
+        console.log("Drawing grid 3");
+        for (var i=0;i<500;i+=25) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, 500);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0,i);
+            ctx.lineTo(500,i);
+            ctx.stroke();
+        }
+    }
+
+    else if (grid == 4) {
+        // 50x50 grid
+        console.log("Drawing grid 3");
+        for (var i=0;i<500;i+=50) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, 500);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0,i);
+            ctx.lineTo(500,i);
+            ctx.stroke();
+        }
+    }
+
+    else if (grid == 5) {
+        // Triangular grid
+
+        console.log("Drawing grid 5");
+    }
+
+    ctx.globalAlpha = 1;        
+    ctx.lineWidth = oldWidth;
+
+
 
     // redraw all edges
     for (var i = 0; i < storedEdges.length; i++) {
@@ -321,6 +409,53 @@ function moveNode(node,toX,toY) {
         }
     } 
 
-    node.x = toX;
-    node.y = toY;
+    node.x = snapToGrid(toX,0)[0];
+    node.y = snapToGrid(0,toY)[1];
+}
+
+function nextGrid() {
+    // 0: no grid, 1: 10x10 square grid, 2: 5x5 square grid
+    grid = (grid + 1) % 6;
+
+    // Snap old nodes to new grid
+    for (var i = 0; i < storedNodes.length; i++) {
+        var node =  storedNodes[i];
+        node.x = snapToGrid(node.x,0)[0];
+        node.y = snapToGrid(0,node.y)[1];
+    }
+
+    draw();
+}
+
+function snapToGrid(x,y) {
+    if (grid == 0) {
+        return {0:x,1:y};
+    }
+    if (grid == 1) {
+        return {0:10*Math.round(x/10),1:10*Math.round(y/10)};
+    }
+    if (grid == 2) {
+        return {0:15*Math.round(x/15),1:15*Math.round(y/15)};
+    }
+    if (grid == 3) {
+        return {0:25*Math.round(x/25),1:25*Math.round(y/25)};
+    }
+    if (grid == 4) {
+        return {0:50*Math.round(x/50),1:50*Math.round(y/50)};
+    }
+    if (grid == 5) {
+        return {0:x,1:y};
+    }
+}
+
+function nextColor(col) {
+    return (col+1) % 5;
+}
+
+function nextNodeStyle(style) {
+    return (style+1) % 4;
+}
+
+function nextEdgeStyle(style) {
+    return (style+1) % 6;
 }
