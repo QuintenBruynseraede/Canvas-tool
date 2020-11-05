@@ -64,8 +64,8 @@ function mouseUp(e) {
                 x: snapToGrid(mouseX,mouseY)[0],
                 y: snapToGrid(mouseX,mouseY)[1],
                 label: "",
-                color: 0,
-                style: 0
+                color: "black",
+                style: "circle"
             });
             console.log("Added node at "+mouseX+",",mouseY);
             break;
@@ -81,8 +81,8 @@ function mouseUp(e) {
                         node1: firstNode,
                         node2: secondNode,
                         label: "",
-                        color: 0,
-                        style: 0
+                        color: "black",
+                        style: "line_full"
                     });
                 }
 
@@ -132,6 +132,27 @@ function mouseUp(e) {
                 console.log("No element to delete");
             }
             break;
+        case "color":
+            res1 = getClosestNode(mouseX,mouseY,10);
+            res2 = getClosestEdge(mouseX,mouseY,10);
+            console.log(`Closest node: ${res1.id}, closest edge ${res2.id}`);
+            if (res1.elem == null && res2.elem != null) {
+                console.log("Change color for edge "+res2.id);
+                //Change color
+                storedEdges[res2.id].color = nextColor(storedEdges[res2.id].color);
+            }
+            else if (res2.elem == null && res1.elem != null) {
+                console.log("Change color for node "+res1.id);
+                storedNodes[res1.id].color = nextColor(storedNodes[res1.id].color);
+            }
+            else if (res2.elem != null && res1.elem != null) {
+                console.log("Choosing to change color for node before edge");
+                storedNodes[res1.id].color = nextColor(storedNodes[res1.id].color);
+            }
+            else {
+                console.log("No element to change");
+            }
+            break;            
     }
 
     draw();    
@@ -283,15 +304,16 @@ function draw() {
     // redraw all edges
     for (var i in storedEdges) {
         var edge = storedEdges[i];
+        ctx.strokeStyle = edge.color;
+
         if (edge == selectedElem) {
-            ctx.strokeStyle = "red";
+            ctx.lineWidth = 6;
         }
-        else {
-            ctx.strokeStyle = "black";
-        }
+
         ctx.beginPath();
         ctx.moveTo(storedNodes[edge.node1].x, storedNodes[edge.node1].y);
         ctx.lineTo(storedNodes[edge.node2].x, storedNodes[edge.node2].y);
+        ctx.lineWidth = 3;
         if (edge.label != "") {
             ctx.fillText(edge.label,(storedNodes[edge.node1].x+storedNodes[edge.node2].x)/2,(storedNodes[edge.node1].y+storedNodes[edge.node2].y)/2-15);
             // console.log(edge.label);
@@ -304,20 +326,13 @@ function draw() {
     for (var key in storedNodes) {
         var node =  storedNodes[key];
         ctx.beginPath();
-        if (node == selectedElem || key == firstNode)  {
-            ctx.strokeStyle = "red";
-            ctx.arc(node.x,node.y,3,0,2*Math.PI);
-        }
-        else if (node == firstNode) {
-            ctx.strokeStyle = "red";
-            ctx.arc(node.x,node.y,3,0,2*Math.PI);
-        }
-        else if (node == secondNode) {
-            ctx.strokeStyle = "blue";
-            ctx.arc(node.x,node.y,3,0,2*Math.PI);
+        ctx.strokeStyle = node.color;
+        ctx.lineWidth=6;
+
+        if (node == selectedElem || key == firstNode || node == firstNode)  {
+            ctx.arc(node.x,node.y,6,0,2*Math.PI);
         }
         else {
-            ctx.strokeStyle = "black";
             ctx.arc(node.x,node.y,3,0,2*Math.PI);
         }
         if (node.label != "") {
@@ -467,15 +482,19 @@ function snapToGrid(x,y) {
 }
 
 function nextColor(col) {
-    return (col+1) % 5;
+    var colors = ["black", "red", "green", "blue"];
+    return colors[(colors.indexOf(col)+1) % colors.length];
 }
 
 function nextNodeStyle(style) {
-    return (style+1) % 4;
+    var nodeStyles = ["circle", "square", "triangle"];
+    return nodeStyles[(nodeStyles.indexOf(style)+1) % nodeStyles.length];
+
 }
 
 function nextEdgeStyle(style) {
-    return (style+1) % 6;
+    var edgeStyles = ["line_full","arrow_full","arrow2_full","line_dashed","arrow_dashed","arrow2_dashed"];
+    return edgeStyles[(edgeStyles.indexOf(style)+1) % edgeStyles.length];
 }
 
 function removeNode(elem,key) {
