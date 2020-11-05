@@ -12,7 +12,7 @@ var selectedElem;
 var firstNode = null;
 var secondNode = null;
 var movingElem = null;
-var grid = 0;
+var grid = 3;
 
 function init() {
     canvas = document.getElementById("canvas");
@@ -21,8 +21,8 @@ function init() {
     canvasOffset = $("#canvas").offset();
     offsetX = canvasOffset.left;
     offsetY = canvasOffset.top;
-    storedEdges = [];
-    storedNodes = [];
+    storedEdges = {};
+    storedNodes = {};
     startX = 0;
     startY = 0;
 
@@ -60,13 +60,13 @@ function mouseUp(e) {
     
     switch (tool) {
         case "node":
-            storedNodes.push({
+            addNode({
                 x: snapToGrid(mouseX,mouseY)[0],
                 y: snapToGrid(mouseX,mouseY)[1],
                 label: "",
                 color: 0,
                 style: 0
-            })
+            });
             console.log("Added node at "+mouseX+",",mouseY);
             break;
         case "edge":
@@ -76,13 +76,16 @@ function mouseUp(e) {
             }
             else {
                 secondNode = getClosestNode(mouseX,mouseY,10).id;
-                addEdge({
-                    node1: firstNode,
-                    node2: secondNode,
-                    label: "",
-                    color: 0,
-                    style: 0
-                });
+                if (secondNode != null) {
+                    addEdge({
+                        node1: firstNode,
+                        node2: secondNode,
+                        label: "",
+                        color: 0,
+                        style: 0
+                    });
+                }
+
                 firstNode = null;
                 secondNode = null;
             }
@@ -105,11 +108,30 @@ function mouseUp(e) {
             else {
                 selectedElem = res1.elem;
             }
-
-
             break;
         case "move":
             movingElem = null;
+            break;
+        case "delete":
+            res1 = getClosestNode(mouseX,mouseY,10);
+            res2 = getClosestEdge(mouseX,mouseY,10);
+            console.log(`Closest node: ${res1.id}, closest edge ${res2.id}`);
+            if (res1.elem == null && res2.elem != null) {
+                console.log("removing edge "+res2.id);
+                delete storedEdges[res2.id];
+            }
+            else if (res2.elem == null && res1.elem != null) {
+                console.log("removing node "+res1.id);
+                removeNode(res1.elem,res1.id);
+            }
+            else if (res2.elem != null && res1.elem != null) {
+                console.log("Choosing to delete node before edge");
+                removeNode(res1.elem,res1.id);
+            }
+            else {
+                console.log("No element to delete");
+            }
+            break;
     }
 
     draw();    
@@ -192,8 +214,6 @@ function draw() {
     }
     else if (grid == 1) {
         // 10x10 grid
-        console.log("Drawing grid 1");
-
         for (var i=0;i<500;i+=10) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
@@ -208,7 +228,6 @@ function draw() {
     }
     else if (grid == 2) {
         // 15x15 grid
-        console.log("Drawing grid 2");
         for (var i=0;i<500;i+=15) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
@@ -224,7 +243,6 @@ function draw() {
 
     else if (grid == 3) {
         // 25x25 grid
-        console.log("Drawing grid 3");
         for (var i=0;i<500;i+=25) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
@@ -240,7 +258,6 @@ function draw() {
 
     else if (grid == 4) {
         // 50x50 grid
-        console.log("Drawing grid 3");
         for (var i=0;i<500;i+=50) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
@@ -257,7 +274,6 @@ function draw() {
     else if (grid == 5) {
         // Triangular grid
 
-        console.log("Drawing grid 5");
     }
 
     ctx.globalAlpha = 1;        
@@ -265,7 +281,7 @@ function draw() {
 
 
     // redraw all edges
-    for (var i = 0; i < storedEdges.length; i++) {
+    for (var i in storedEdges) {
         var edge = storedEdges[i];
         if (edge == selectedElem) {
             ctx.strokeStyle = "red";
@@ -285,10 +301,10 @@ function draw() {
     }  
 
     // redraw each stored node
-    for (var i = 0; i < storedNodes.length; i++) {
-        var node =  storedNodes[i];
+    for (var key in storedNodes) {
+        var node =  storedNodes[key];
         ctx.beginPath();
-        if (node == selectedElem || i == firstNode)  {
+        if (node == selectedElem || key == firstNode)  {
             ctx.strokeStyle = "red";
             ctx.arc(node.x,node.y,3,0,2*Math.PI);
         }
@@ -339,7 +355,7 @@ function getClosestNode(x,y,maxdist) {
     var minElem;
     var id=null;
 
-    for (var i = 0; i < storedNodes.length; i++) {
+    for (var i in storedNodes) {
         if (Math.sqrt(Math.pow(x-storedNodes[i].x,2) + Math.pow(y-storedNodes[i].y,2)) < minDist) {
             minDist = Math.sqrt(Math.pow(x-storedNodes[i].x,2) + Math.pow(y-storedNodes[i].y,2));
             minElem = storedNodes[i];
@@ -357,8 +373,9 @@ function getClosestEdge(x,y,maxdist) {
     var dist;
     var minElem;
     var x1,x2,y1,y2,x0,y0;
+    var id;
 
-    for (var i = 0; i < storedEdges.length; i++) {
+    for (var i in storedEdges) {
         x1 = storedNodes[storedEdges[i].node1].x;
         x2 = storedNodes[storedEdges[i].node2].x;
         y1 = storedNodes[storedEdges[i].node1].y;
@@ -370,12 +387,13 @@ function getClosestEdge(x,y,maxdist) {
         if (dist < minDist) {
             minElem = storedEdges[i];
             minDist = dist;
+            id = i;
         }
     }
     if (minDist > 10) {
-        return {elem: null,dist:null};
+        return {elem: null,dist:null,id:null};
     }
-    return {elem: minElem,dist:minDist};
+    return {elem: minElem,dist:minDist,id:id};
 }
 
 function addEdge(e) {
@@ -384,15 +402,28 @@ function addEdge(e) {
         return;
     }
 
-    for (var i = 0; i < storedEdges.length; i++) {
+    for (var i in storedEdges) {
         e2 = storedEdges[i];
         if (e.node1 == e2.node1 && e.node2 == e2.node2) {
             console.log("Edge already exists!");
             return;
         }
     } 
-    console.log("Added edge.");
-    storedEdges.push(e);
+
+    if (Object.keys(storedEdges).length == 0) {
+        storedEdges[0] = e;
+        return;
+    }
+
+    var max = -1;
+    for (var i in storedEdges) {
+        if (parseInt(i) > max) {
+            max = parseInt(i);
+        }
+    }
+
+    storedEdges[max+1] = e;
+    console.log(`Added edge ${max+1}`);
 }
 
 function moveNode(node,toX,toY) {
@@ -405,7 +436,7 @@ function nextGrid() {
     grid = (grid + 1) % 6;
 
     // Snap old nodes to new grid
-    for (var i = 0; i < storedNodes.length; i++) {
+    for (var i in storedNodes) {
         var node =  storedNodes[i];
         node.x = snapToGrid(node.x,0)[0];
         node.y = snapToGrid(0,node.y)[1];
@@ -445,4 +476,36 @@ function nextNodeStyle(style) {
 
 function nextEdgeStyle(style) {
     return (style+1) % 6;
+}
+
+function removeNode(elem,key) {
+    for (var i in storedNodes) {
+        if (storedNodes[i] == elem) {
+            delete storedNodes[i];
+            console.log(`Removed node ${i}`);
+        }
+    }
+    for (var i in storedEdges) {
+        if (storedEdges[i].node1 == key || storedEdges[i].node2 == key) {
+            delete storedEdges[i];
+            i = 0;
+            console.log(`Removed edge ${i}`);
+        }
+    }
+}
+
+function addNode(elem) {
+    if (Object.keys(storedNodes).length == 0) {
+        storedNodes[0] = elem;   
+        return;    
+    }
+
+    var max = -1;
+    for (var node in storedNodes) {
+        if (parseInt(node) > max) {
+            max = parseInt(node);
+        }
+    }
+    console.log(`Using index ${max+1}`);
+    storedNodes[max+1] = elem;
 }
