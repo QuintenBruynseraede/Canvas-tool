@@ -230,6 +230,7 @@ function keyPress(e) {
     
     if (selectedElem != null) {
         selectedElem.label = selectedElem.label + String.fromCharCode(e.keyCode);
+        updateOutput();
         draw();
     }
 }
