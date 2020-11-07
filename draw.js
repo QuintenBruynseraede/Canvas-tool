@@ -113,6 +113,7 @@ function mouseUp(e) {
             break;
         case "move":
             movingElem = null;
+            updateOutput();
             break;
         case "delete":
             res1 = getClosestNode(mouseX,mouseY,10);
@@ -557,7 +558,7 @@ function snapToGrid(x,y) {
             new_x = Math.round(z*Math.round(x/z))
         }
         else {
-            new_x = z/2+Math.round(z*Math.round((x-z/2)/z));
+            new_x = Math.round(z/2+z*Math.round((x-z/2)/z));
         }
         return {0:new_x,1:new_y};
     }
