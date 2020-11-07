@@ -16,6 +16,7 @@ var grid = 5;
 
 function init() {
     canvas = document.getElementById("canvas");
+    output = document.getElementById("output");
     ctx = canvas.getContext("2d");
     ctx.textAlign = "center"; 
     canvasOffset = $("#canvas").offset();
@@ -448,6 +449,7 @@ function addEdge(e) {
 
     if (Object.keys(storedEdges).length == 0) {
         storedEdges[0] = e;
+        updateOutput();
         return;
     }
 
@@ -460,6 +462,7 @@ function addEdge(e) {
 
     storedEdges[max+1] = e;
     console.log(`Added edge ${max+1}`);
+    updateOutput();
 }
 
 function moveNode(node,toX,toY) {
@@ -551,7 +554,7 @@ function removeNode(elem,key) {
 function addNode(elem) {
     if (Object.keys(storedNodes).length == 0) {
         storedNodes[0] = elem;   
-        return;    
+        updateOutput();    
     }
 
     var max = -1;
@@ -567,5 +570,10 @@ function addNode(elem) {
     console.log(`Using index ${max+1}`);
     storedNodes[max+1] = elem;
     console.log("Added node at "+elem.x+",",elem.y);
+    updateOutput();
 
+}
+
+function updateOutput() {
+    output.textContent = JSON.stringify({"nodes":storedNodes,"edges":storedEdges});
 }

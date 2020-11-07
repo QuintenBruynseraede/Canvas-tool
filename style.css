@@ -7,6 +7,10 @@ body {
     width: 400px;
 }
 
+#output_div {
+    float:left;
+    width: 600px;
+}
 #canvas {
     float: left;
     border-style: solid;
