@@ -12,7 +12,7 @@ var selectedElem;
 var firstNode = null;
 var secondNode = null;
 var movingElem = null;
-var grid = 3;
+var grid = 5;
 
 function init() {
     canvas = document.getElementById("canvas");
@@ -60,14 +60,15 @@ function mouseUp(e) {
     
     switch (tool) {
         case "node":
+            var x = Math.round(snapToGrid(mouseX,mouseY)[0]);
+            var y = Math.round(snapToGrid(mouseX,mouseY)[1]);
             addNode({
-                x: snapToGrid(mouseX,mouseY)[0],
-                y: snapToGrid(mouseX,mouseY)[1],
+                x: x,
+                y: y,
                 label: "",
                 color: "black",
                 style: "circle"
             });
-            console.log("Added node at "+mouseX+",",mouseY);
             break;
         case "edge":
             if (firstNode == null) {
@@ -294,7 +295,27 @@ function draw() {
 
     else if (grid == 5) {
         // Triangular grid
+        var h = 27
+        for (var y=0;y<500;y+=h) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(500,y);
+            ctx.stroke();
+        }
 
+        for (var y=-650;y<500;y+=2*h) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(Math.tan(Math.PI/6)*(500-y),500);
+            ctx.stroke();
+        }
+
+        for (var y=2*h;y<1050;y+=2*h) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(Math.tan(Math.PI/6)*(y),0);
+            ctx.stroke();
+        }
     }
 
     ctx.globalAlpha = 1;        
@@ -442,8 +463,10 @@ function addEdge(e) {
 }
 
 function moveNode(node,toX,toY) {
-    node.x = snapToGrid(toX,0)[0];
-    node.y = snapToGrid(0,toY)[1];
+    var res = snapToGrid(toX,toY);
+    node.y = res[1];
+    node.x = res[0];
+
 }
 
 function nextGrid() {
@@ -477,7 +500,19 @@ function snapToGrid(x,y) {
         return {0:50*Math.round(x/50),1:50*Math.round(y/50)};
     }
     if (grid == 5) {
-        return {0:x,1:y};
+        //Snap y to horizontal
+        var new_y = 27*Math.round(y/27);
+
+        // Length of triangle side
+        var z = (2*Math.sqrt(3)*27)/3;
+
+        if (new_y % 54 == 0) {
+            new_x = Math.round(z*Math.round(x/z))
+        }
+        else {
+            new_x = z/2+Math.round(z*Math.round((x-z/2)/z));
+        }
+        return {0:new_x,1:new_y};
     }
 }
 
@@ -521,10 +556,16 @@ function addNode(elem) {
 
     var max = -1;
     for (var node in storedNodes) {
+        if (storedNodes[node].x == elem.x && storedNodes[node].y == elem.y) {
+            console.log("Node already exists at this position!");
+            return;
+        }
         if (parseInt(node) > max) {
             max = parseInt(node);
         }
     }
     console.log(`Using index ${max+1}`);
     storedNodes[max+1] = elem;
+    console.log("Added node at "+elem.x+",",elem.y);
+
 }
