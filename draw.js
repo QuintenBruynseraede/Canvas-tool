@@ -28,7 +28,7 @@ function init() {
     startY = 0;
 
     ctx.strokeStyle = "black";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
 
     setTool(tool);
 
@@ -133,6 +133,7 @@ function mouseUp(e) {
             else {
                 console.log("No element to delete");
             }
+            updateOutput();
             break;
         case "color":
             res1 = getClosestNode(mouseX,mouseY,10);
@@ -154,7 +155,30 @@ function mouseUp(e) {
             else {
                 console.log("No element to change");
             }
+            updateOutput();
             break;            
+        case "style":
+            res1 = getClosestNode(mouseX,mouseY,10);
+            res2 = getClosestEdge(mouseX,mouseY,10);
+            console.log(`Closest node: ${res1.id}, closest edge ${res2.id}`);
+            if (res1.elem == null && res2.elem != null) {
+                console.log("Change style for edge "+res2.id);
+                //Change color
+                storedEdges[res2.id].style = nextEdgeStyle(storedEdges[res2.id].style);
+            }
+            else if (res2.elem == null && res1.elem != null) {
+                console.log("Change style for node "+res1.id);
+                storedNodes[res1.id].style = nextNodeStyle(storedNodes[res1.id].style);
+            }
+            else if (res2.elem != null && res1.elem != null) {
+                console.log("Choosing to style color for node before edge");
+                storedNodes[res1.id].style = nextNodeStyle(storedNodes[res1.id].style);
+            }
+            else {
+                console.log("No element to change");
+            }
+            updateOutput();
+            break;   
     }
 
     draw();    
@@ -329,19 +353,24 @@ function draw() {
         ctx.strokeStyle = edge.color;
 
         if (edge == selectedElem) {
-            ctx.lineWidth = 6;
+            ctx.lineWidth = 4;
+        }
+
+        if (edge.style == "line_dashed" || edge.style == "arrow_dashed" || edge.style == "arrow2_dashed") {
+            ctx.setLineDash([10, 6]);
         }
 
         ctx.beginPath();
         ctx.moveTo(storedNodes[edge.node1].x, storedNodes[edge.node1].y);
         ctx.lineTo(storedNodes[edge.node2].x, storedNodes[edge.node2].y);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         if (edge.label != "") {
             ctx.fillText(edge.label,(storedNodes[edge.node1].x+storedNodes[edge.node2].x)/2,(storedNodes[edge.node1].y+storedNodes[edge.node2].y)/2-15);
             // console.log(edge.label);
         }
         ctx.stroke();
-        
+        ctx.setLineDash([]);
+
     }  
 
     // redraw each stored node
@@ -349,14 +378,29 @@ function draw() {
         var node =  storedNodes[key];
         ctx.beginPath();
         ctx.strokeStyle = node.color;
-        ctx.lineWidth=6;
+        ctx.fillStyle = node.color;
+        ctx.lineWidth=4;
 
-        if (node == selectedElem || key == firstNode || node == firstNode)  {
-            ctx.arc(node.x,node.y,6,0,2*Math.PI);
+        var nodeSize = ((node == selectedElem || key == firstNode || node == firstNode)? 4:2);
+        switch (node.style) {
+            case "circle":
+                ctx.arc(node.x,node.y,nodeSize*2,0,2*Math.PI);
+                break;
+            case "square":
+                ctx.fillRect(node.x-nodeSize*3,node.y-nodeSize*3,2*nodeSize*3,2*nodeSize*3);
+                break;
+            case "triangle":
+                ctx.lineWidth=1;
+                ctx.beginPath();
+                ctx.moveTo(node.x,node.y-nodeSize*4);
+                ctx.lineTo(node.x+nodeSize*4,node.y+nodeSize*4);
+                ctx.lineTo(node.x-nodeSize*4,node.y+nodeSize*4);
+                ctx.lineTo(node.x,node.y-nodeSize*4);
+                ctx.fill();
+                break;
         }
-        else {
-            ctx.arc(node.x,node.y,3,0,2*Math.PI);
-        }
+        
+
         if (node.label != "") {
             ctx.font = "15px Arial";
             ctx.fillText(node.label,node.x,node.y-15);
