@@ -14,7 +14,7 @@ TODO:
 - Make it prettier
 
 ## Showcase
-![1](screenshots/1.jpg)
-![2](screenshots/1.jpg)
-![3](screenshots/1.jpg)
-![4](screenshots/1.jpg)
+![1](screenshots/1.png)
+![2](screenshots/2.png)
+![3](screenshots/3.png)
+![4](screenshots/4.png)
